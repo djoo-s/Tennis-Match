@@ -5,7 +5,7 @@
     <title>테니스 매칭 시스템</title>
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f4f9; }
-        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
+        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; min-height: 300px; }
         .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         button { width: 100%; padding: 12px; margin-top: 10px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
@@ -20,7 +20,6 @@
         <h3>1단계: 기본 설정</h3>
         참가 인원: <input type="number" id="numPeople" value="12" style="width:50px;">명<br>
         운용 세트 수: <input type="number" id="totalSets" value="5" style="width:50px;">세트
-        <p>→ 총 경기: <span id="totalGamesDisp" style="color:blue; font-weight:bold;">10</span></p>
         <button onclick="goToStep2()">멤버 상세 입력</button>
         <div class="version">v1.0.1</div>
     </div>
@@ -35,7 +34,6 @@
 
     <div class="card" id="step3" style="display:none;">
         <h3>3단계: 타입별 경기 배분</h3>
-        <p id="stats"></p>
         <div class="row">남복 경기: <input type="number" id="gameM" value="4"></div>
         <div class="row">혼복 경기: <input type="number" id="gameMix" value="4"></div>
         <div class="row">여복 경기: <input type="number" id="gameF" value="2"></div>
@@ -64,27 +62,31 @@
             let html = "";
             for(let i=1; i<=num; i++) {
                 html += `<div class="row">
-                    <input type="text" id="name${i}" value="선수${i}" style="width:50px;">
-                    <label><input type="radio" name="sex${i}" value="M" ${i%3!=0?'checked':''}>남</label>
-                    <label><input type="radio" name="sex${i}" value="F" ${i%3==0?'checked':''}>여</label>
-                    <input type="number" id="skill${i}" value="${Math.floor(Math.random()*10)+1}" style="width:35px;">
+                    <input type="text" id="name${i}" placeholder="이름${i}" style="width:60px;">
+                    <label><input type="radio" name="sex${i}" value="M" checked>남</label>
+                    <label><input type="radio" name="sex${i}" value="F">여</label>
+                    <input type="number" id="skill${i}" value="5" style="width:35px;">
                 </div>`;
             }
             document.getElementById('memberInputs').innerHTML = html;
             backTo(2);
         }
 
-        function goToStep3() {
-            backTo(3);
-        }
+        function goToStep3() { backTo(3); }
 
         function runMatching() {
+            let members = [];
+            const num = parseInt(document.getElementById('numPeople').value);
+            for(let i=1; i<=num; i++) {
+                members.push({ name: document.getElementById(`name${i}`).value || `선수${i}` });
+            }
+
             let result = "--- 최종 대진표 ---\n\n";
             const sets = parseInt(document.getElementById('totalSets').value);
             for(let i = 1; i <= sets; i++) {
                 result += `[${i}세트]\n`;
-                result += `1게임-A코트: [선수1, 선수8] vs [선수2, 선수7]\n`;
-                result += `1게임-B코트: [선수3, 선수6] vs [선수4, 선수5]\n\n`;
+                result += `A코트: [${members[0].name}, ${members[7].name}] vs [${members[1].name}, ${members[6].name}]\n`;
+                result += `B코트: [${members[2].name}, ${members[5].name}] vs [${members[3].name}, ${members[4].name}]\n\n`;
             }
             document.getElementById('step3').style.display = 'none';
             document.getElementById('resultCard').style.display = 'block';
