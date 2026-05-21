@@ -5,7 +5,7 @@
     <title>테니스 매칭 시스템</title>
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f4f9; }
-        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; min-height: 350px; }
+        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; min-height: 400px; }
         .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
         input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
         button { width: 100%; padding: 12px; margin-top: 10px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
@@ -69,36 +69,46 @@
             let members = [];
             const num = parseInt(document.getElementById('numPeople').value);
             const mode = document.getElementById('mode').value;
+            const sets = parseInt(document.getElementById('totalSets').value);
 
             for(let i=1; i<=num; i++) {
                 members.push({
                     name: document.getElementById(`name${i}`).value || `선수${i}`,
                     sex: document.getElementById(`sex${i}`).value,
-                    val: parseInt(document.getElementById(`val${i}`).value) || 1
+                    val: parseInt(document.getElementById(`val${i}`).value) || 1,
+                    playCount: 0 
                 });
             }
 
-            // [알고리즘]
+            // [알고리즘] 초기 정렬
             if(mode === 'level') {
-                // 레벨: 여성 6이상 남성 보정 후 정렬
                 members.forEach(m => { if(m.sex === 'F' && m.val >= 6) m.val += 2; });
                 members.sort((a,b) => b.val - a.val);
-            } else {
-                // 순위: 랜덤성 포함 정렬
-                members.sort(() => Math.random() - 0.5);
             }
 
             let result = `--- 최종 대진표 (${mode === 'level' ? '레벨' : '순위'} 모드) ---\n\n`;
-            const sets = parseInt(document.getElementById('totalSets').value);
             
             for(let i = 1; i <= sets; i++) {
-                // 매 세트마다 약간의 랜덤성(밸런스 파괴) 부여
-                let currentMembers = [...members].sort(() => (Math.random() > 0.8 ? 0.5 : -0.5));
+                // 1. 경기 적게 뛴 사람 우선 + 같은 횟수면 랜덤 정렬
+                members.sort((a, b) => a.playCount - b.playCount || Math.random() - 0.5);
                 
+                // 2. 상위 8명 추출 (코트 2개분)
+                let courtGroup = members.slice(0, 8);
+                courtGroup.forEach(m => m.playCount++); 
+
+                // 3. 20% 확률로 밸런스 파괴 (랜덤 섞기)
+                if(Math.random() > 0.8) courtGroup.sort(() => Math.random() - 0.5);
+
                 result += `[${i}세트]\n`;
-                result += `A코트: [${currentMembers[0].name}, ${currentMembers[7].name}] vs [${currentMembers[1].name}, ${currentMembers[6].name}]\n`;
-                result += `B코트: [${currentMembers[2].name}, ${currentMembers[5].name}] vs [${currentMembers[3].name}, ${currentMembers[4].name}]\n\n`;
+                result += `A코트: [${courtGroup[0].name}, ${courtGroup[7].name}] vs [${courtGroup[1].name}, ${courtGroup[6].name}]\n`;
+                result += `B코트: [${courtGroup[2].name}, ${courtGroup[5].name}] vs [${courtGroup[3].name}, ${courtGroup[4].name}]\n\n`;
             }
+            
+            result += `----------------------------\n`;
+            result += `[개인별 총 출전 횟수 요약]\n`;
+            members.forEach(m => {
+                result += `- ${m.name}: ${m.playCount}회\n`;
+            });
 
             document.getElementById('step2').style.display = 'none';
             document.getElementById('resultCard').style.display = 'block';
