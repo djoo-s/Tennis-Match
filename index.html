@@ -5,12 +5,12 @@
     <title>테니스 매칭 시스템</title>
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f4f9; }
-        .card { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         button { width: 100%; padding: 12px; margin-top: 10px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .back-btn { background: #6c757d; }
-        #resultArea { margin-top: 15px; padding: 10px; background: #eee; border-radius: 8px; white-space: pre-wrap; font-size: 13px; }
+        #resultArea { margin-top: 15px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 8px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -33,16 +33,16 @@
     <div class="card" id="step3" style="display:none;">
         <h3>3단계: 타입별 경기 배분</h3>
         <p id="stats"></p>
-        <div class="row">남복: <input type="number" id="gameM" value="4" oninput="checkTotal()"></div>
-        <div class="row">혼복: <input type="number" id="gameMix" value="4" oninput="checkTotal()"></div>
-        <div class="row">여복: <input type="number" id="gameF" value="2" oninput="checkTotal()"></div>
+        <div class="row">남복 경기: <input type="number" id="gameM" value="4" oninput="checkTotal()"></div>
+        <div class="row">혼복 경기: <input type="number" id="gameMix" value="4" oninput="checkTotal()"></div>
+        <div class="row">여복 경기: <input type="number" id="gameF" value="2" oninput="checkTotal()"></div>
         <p>남은 경기: <span id="remainingGames" style="font-weight:bold; color:red;">0</span></p>
         <button id="matchBtn" onclick="runMatching()">최종 팀 매칭 실행</button>
         <button class="back-btn" onclick="backTo(2)">뒤로가기</button>
     </div>
 
     <div class="card" id="resultCard" style="display:none;">
-        <h3>매칭 결과</h3>
+        <h3>최종 대진표</h3>
         <div id="resultArea"></div>
         <button onclick="location.reload()">처음으로</button>
     </div>
@@ -65,8 +65,8 @@
             let html = "";
             for(let i=1; i<=num; i++) {
                 html += `<div class="row">
-                    <input type="text" id="name${i}" value="테니스${i}" maxlength="5" style="width:50px;">
-                    <label><input type="radio" name="sex${i}" value="M" ${i%3==0?'':'checked'}>남</label>
+                    <input type="text" id="name${i}" value="선수${i}" maxlength="5" style="width:50px;">
+                    <label><input type="radio" name="sex${i}" value="M" ${i%3!=0?'checked':''}>남</label>
                     <label><input type="radio" name="sex${i}" value="F" ${i%3==0?'checked':''}>여</label>
                     <input type="number" id="skill${i}" value="${Math.floor(Math.random()*10)+1}" style="width:35px;">
                 </div>`;
@@ -108,18 +108,29 @@
                 });
             }
 
-            // 실력 보정 알고리즘
-            members.sort((a,b) => b.skill - a.skill);
-            members.forEach((m, idx) => { if(idx < 6 && m.sex === 'F') m.skill += 2; });
+            // [알고리즘] 1. 상위 6명 여성 보정
+            let sorted = [...members].sort((a,b) => b.skill - a.skill);
+            members.forEach(m => {
+                let rank = sorted.indexOf(m);
+                if(rank < 6 && m.sex === 'F') m.skill += 2;
+            });
 
-            // 간단한 팀 구성 시뮬레이션
-            let result = "코트 1 & 2 동시 대진표:\n\n";
-            for(let i=1; i<=parseInt(document.getElementById('totalSets').value); i++) {
-                result += `[${i}세트]\n`;
-                result += ` 코트1: A팀 vs B팀\n`;
-                result += ` 코트2: C팀 vs D팀\n\n`;
-            }
+            // [알고리즘] 2. 매칭 시뮬레이션
+            let result = "";
+            const mGames = parseInt(document.getElementById('gameM').value);
+            const mixGames = parseInt(document.getElementById('gameMix').value);
+            const fGames = parseInt(document.getElementById('gameF').value);
             
+            const schedule = Array(mGames).fill('남복').concat(Array(mixGames).fill('혼복')).concat(Array(fGames).fill('여복'));
+            
+            schedule.forEach((type, idx) => {
+                result += `[${idx+1}경기 - ${type}]\n`;
+                // 간단한 밸런스 매칭 (상위/하위 섞기)
+                let temp = [...members].sort((a,b) => b.skill - a.skill);
+                result += `  코트1: ${temp[0].name}, ${temp[7].name} vs ${temp[1].name}, ${temp[6].name}\n`;
+                result += `  코트2: ${temp[2].name}, ${temp[5].name} vs ${temp[3].name}, ${temp[4].name}\n\n`;
+            });
+
             document.getElementById('step3').style.display = 'none';
             document.getElementById('resultCard').style.display = 'block';
             document.getElementById('resultArea').innerText = result;
