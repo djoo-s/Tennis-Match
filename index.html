@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>테니스 매칭 시스템</title>
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f4f9; }
@@ -114,7 +113,6 @@
                 });
             }
 
-            // 실력 보정 및 정렬
             let sorted = [...members].sort((a,b) => b.skill - a.skill);
             members.forEach(m => {
                 let rank = sorted.indexOf(m);
