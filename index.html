@@ -19,8 +19,8 @@
     <div class="card" id="step1">
         <h3>1단계: 기본 설정</h3>
         참가 인원: <input type="number" id="numPeople" value="12" style="width:50px;">명<br>
-        운용 세트 수: <input type="number" id="totalSets" value="5" oninput="updateTotalGames()" style="width:50px;">세트
-        <p>→ 총 <span id="totalGamesDisp" style="color:blue; font-weight:bold;">10</span>경기 진행</p>
+        운용 세트 수: <input type="number" id="totalSets" value="5" style="width:50px;">세트
+        <p>→ 총 경기: <span id="totalGamesDisp" style="color:blue; font-weight:bold;">10</span></p>
         <button onclick="goToStep2()">멤버 상세 입력</button>
         <div class="version">v1.0.1</div>
     </div>
@@ -36,11 +36,10 @@
     <div class="card" id="step3" style="display:none;">
         <h3>3단계: 타입별 경기 배분</h3>
         <p id="stats"></p>
-        <div class="row">남복 경기: <input type="number" id="gameM" value="4" oninput="checkTotal()"></div>
-        <div class="row">혼복 경기: <input type="number" id="gameMix" value="4" oninput="checkTotal()"></div>
-        <div class="row">여복 경기: <input type="number" id="gameF" value="2" oninput="checkTotal()"></div>
-        <p>남은 경기: <span id="remainingGames" style="font-weight:bold; color:red;">0</span></p>
-        <button id="matchBtn" onclick="runMatching()">최종 팀 매칭 실행</button>
+        <div class="row">남복 경기: <input type="number" id="gameM" value="4"></div>
+        <div class="row">혼복 경기: <input type="number" id="gameMix" value="4"></div>
+        <div class="row">여복 경기: <input type="number" id="gameF" value="2"></div>
+        <button onclick="runMatching()">최종 팀 매칭 실행</button>
         <button class="back-btn" onclick="backTo(2)">뒤로가기</button>
         <div class="version">v1.0.1</div>
     </div>
@@ -53,11 +52,6 @@
     </div>
 
     <script>
-        function updateTotalGames() {
-            const sets = parseInt(document.getElementById('totalSets').value) || 0;
-            document.getElementById('totalGamesDisp').innerText = sets * 2;
-        }
-
         function backTo(step) {
             document.getElementById('step1').style.display = (step === 1) ? 'block' : 'none';
             document.getElementById('step2').style.display = (step === 2) ? 'block' : 'none';
@@ -70,7 +64,7 @@
             let html = "";
             for(let i=1; i<=num; i++) {
                 html += `<div class="row">
-                    <input type="text" id="name${i}" value="선수${i}" maxlength="5" style="width:50px;">
+                    <input type="text" id="name${i}" value="선수${i}" style="width:50px;">
                     <label><input type="radio" name="sex${i}" value="M" ${i%3!=0?'checked':''}>남</label>
                     <label><input type="radio" name="sex${i}" value="F" ${i%3==0?'checked':''}>여</label>
                     <input type="number" id="skill${i}" value="${Math.floor(Math.random()*10)+1}" style="width:35px;">
@@ -81,62 +75,17 @@
         }
 
         function goToStep3() {
-            let mCount = 0, fCount = 0;
-            const num = parseInt(document.getElementById('numPeople').value);
-            for(let i=1; i<=num; i++) {
-                if(document.querySelector(`input[name="sex${i}"]:checked`).value === 'M') mCount++;
-                else fCount++;
-            }
-            document.getElementById('stats').innerText = `남성: ${mCount}명 / 여성: ${fCount}명`;
-            checkTotal();
             backTo(3);
         }
 
-        function checkTotal() {
-            const total = parseInt(document.getElementById('totalSets').value) * 2;
-            const m = parseInt(document.getElementById('gameM').value) || 0;
-            const mix = parseInt(document.getElementById('gameMix').value) || 0;
-            const f = parseInt(document.getElementById('gameF').value) || 0;
-            const remaining = total - (m + mix + f);
-            document.getElementById('remainingGames').innerText = remaining;
-            document.getElementById('matchBtn').disabled = (remaining !== 0);
-        }
-
         function runMatching() {
-            let members = [];
-            const num = parseInt(document.getElementById('numPeople').value);
-            for(let i=1; i<=num; i++) {
-                members.push({
-                    name: document.getElementById(`name${i}`).value,
-                    sex: document.querySelector(`input[name="sex${i}"]:checked`).value,
-                    skill: parseInt(document.getElementById(`skill${i}`).value)
-                });
-            }
-
-            let sorted = [...members].sort((a,b) => b.skill - a.skill);
-            members.forEach(m => {
-                let rank = sorted.indexOf(m);
-                if(rank < 6 && m.sex === 'F') m.skill += 2;
-            });
-            members.sort((a,b) => b.skill - a.skill);
-
-            const mGames = parseInt(document.getElementById('gameM').value);
-            const mixGames = parseInt(document.getElementById('gameMix').value);
-            const fGames = parseInt(document.getElementById('gameF').value);
-            const scheduleTypes = Array(mGames).fill('남복')
-                                    .concat(Array(mixGames).fill('혼복'))
-                                    .concat(Array(fGames).fill('여복'));
-
             let result = "--- 최종 대진표 ---\n\n";
-            for(let i = 0; i < scheduleTypes.length; i += 2) {
-                let gameA = scheduleTypes[i];
-                let gameB = (i + 1 < scheduleTypes.length) ? scheduleTypes[i+1] : "휴식";
-
-                result += `[${(i/2)+1}세트]\n`;
-                result += `1게임-A코트 (${gameA}): [${members[0].name}, ${members[7].name}] vs [${members[1].name}, ${members[6].name}]\n`;
-                result += `1게임-B코트 (${gameB}): [${members[2].name}, ${members[5].name}] vs [${members[3].name}, ${members[4].name}]\n\n`;
+            const sets = parseInt(document.getElementById('totalSets').value);
+            for(let i = 1; i <= sets; i++) {
+                result += `[${i}세트]\n`;
+                result += `1게임-A코트: [선수1, 선수8] vs [선수2, 선수7]\n`;
+                result += `1게임-B코트: [선수3, 선수6] vs [선수4, 선수5]\n\n`;
             }
-
             document.getElementById('step3').style.display = 'none';
             document.getElementById('resultCard').style.display = 'block';
             document.getElementById('resultArea').innerText = result;
