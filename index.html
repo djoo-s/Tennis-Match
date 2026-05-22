@@ -2,118 +2,168 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>테니스 매칭 시스템</title>
+    <title>Tennis Team Match v1.0.4</title>
     <style>
-        body { font-family: sans-serif; padding: 15px; background: #f4f4f9; }
-        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; min-height: 400px; }
-        .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-        input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 12px; margin-top: 10px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .back-btn { background: #6c757d; }
-        #resultArea { margin-top: 15px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 8px; white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
-        .version { position: absolute; bottom: 10px; right: 15px; font-size: 10px; color: #aaa; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; display: flex; justify-content: center; gap: 20px; }
+        
+        /* 메인 매칭 카드 */
+        .container { flex: 1; max-width: 600px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* 사이드 패치노트 카드 */
+        .note-card { width: 300px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); height: fit-content; }
+        
+        .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; color: #1e293b; }
+        .version { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+        
+        .patch-title { font-size: 18px; font-weight: bold; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+        .patch-list { font-size: 13px; line-height: 1.8; color: #475569; padding-left: 20px; }
+
+        .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        select, input { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; }
+        button { width: 100%; padding: 12px; margin-top: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #0056b3; }
+        
+        #resultArea { margin-top: 20px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #1e293b; }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; align-items: center; }
+            .note-card { width: 100%; max-width: 600px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="card" id="step1">
-        <h3>1단계: 기본 설정</h3>
-        참가 인원: <input type="number" id="numPeople" value="12" style="width:50px;">명<br>
-        운용 세트 수: <input type="number" id="totalSets" value="5" style="width:50px;">세트<br>
-        모드 선택: 
-        <select id="mode" style="padding:5px;">
-            <option value="level">레벨 방식 (1-10 입력)</option>
-            <option value="rank">순위 방식 (등수 입력)</option>
-        </select>
-        <button onclick="goToStep2()">멤버 상세 입력</button>
-        <div class="version">v1.0.2</div>
+    <div class="container">
+        <div class="card" id="step1">
+            <div class="title">Tennis Team Match</div>
+            <div class="version">v1.0.4</div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+            <h3>기본 설정</h3>
+            참가 인원: <input type="number" id="numPeople" value="12" style="width:50px;">명<br>
+            운용 세트 수: <input type="number" id="totalSets" value="5" style="width:50px;">세트<br>
+            <button onclick="goToStep2()">멤버 상세 입력</button>
+        </div>
+
+        <div class="card" id="step2" style="display:none;">
+            <h3>멤버 정보 입력</h3>
+            <div id="memberInputs"></div>
+            <button onclick="runAllSets()">최종 매칭 실행</button>
+        </div>
+
+        <div class="card" id="resultCard" style="display:none;">
+            <h3>최종 대진표</h3>
+            <div id="resultArea"></div>
+            <button onclick="location.reload()">처음으로</button>
+        </div>
     </div>
 
-    <div class="card" id="step2" style="display:none;">
-        <h3>2단계: 멤버 정보</h3>
-        <div id="memberInputs"></div>
-        <button onclick="runMatching()">최종 매칭 실행</button>
-        <button class="back-btn" onclick="backTo(1)">뒤로가기</button>
-        <div class="version">v1.0.2</div>
-    </div>
-
-    <div class="card" id="resultCard" style="display:none;">
-        <h3>최종 대진표</h3>
-        <div id="resultArea"></div>
-        <button onclick="location.reload()">처음으로</button>
-        <div class="version">v1.0.2</div>
+    <div class="note-card">
+        <div class="patch-title">**패치노트**</div>
+        <ul class="patch-list">
+            <li><strong>v1.0.4 (Latest)</strong>
+                <br>- UI 레이아웃 대규모 수정
+                <br>- 패치노트 전용 사이드바 추가
+                <br>- 타이틀 및 버전 정보 최적화
+            </li>
+            <br>
+            <li><strong>v1.0.3</strong>
+                <br>- 대진표 출력 오류(undefined) 수정
+                <br>- 출력 포맷 간소화 (불필요 텍스트 제거)
+                <br>- 데이터 구조 접근 로직 최적화
+            </li>
+            <br>
+            <li><strong>v1.0.2</strong>
+                <br>- 레벨 입력 방식 변경 (1-10 콤보박스)
+                <br>- 이름 옆 성별 표기 추가 (남/여)
+                <br>- 통합 레벨 기준 적용 (성별 예외 제거)
+            </li>
+            <br>
+            <li><strong>v1.0.1</strong>
+                <br>- 7단계 알고리즘 확립
+                <br>- 성비 우선순위(혼복>남복>여복) 적용
+                <br>- 로직-UI 데이터 처리 분리
+            </li>
+        </ul>
     </div>
 
     <script>
-        function backTo(step) {
-            document.getElementById('step1').style.display = (step === 1) ? 'block' : 'none';
-            document.getElementById('step2').style.display = (step === 2) ? 'block' : 'none';
-            document.getElementById('resultCard').style.display = 'none';
-        }
-
         function goToStep2() {
             const num = parseInt(document.getElementById('numPeople').value);
             let html = "";
             for(let i=1; i<=num; i++) {
+                let options = "";
+                for(let l=1; l<=10; l++) options += `<option value="${l}">${l}</option>`;
                 html += `<div class="row">
-                    <input type="text" id="name${i}" placeholder="이름${i}" style="width:50px;">
-                    <select id="sex${i}"><option value="M">남</option><option value="F">여</option></select>
-                    <input type="number" id="val${i}" placeholder="수치" style="width:40px;">
-                </div>`;
+                    <input type="text" id="n${i}" placeholder="이름" style="width:70px;">
+                    <select id="s${i}"><option value="M">남</option><option value="F">여</option></select>
+                    <select id="v${i}">${options}</select></div>`;
             }
             document.getElementById('memberInputs').innerHTML = html;
-            backTo(2);
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
         }
 
-        function runMatching() {
-            let members = [];
+        function runAllSets() {
             const num = parseInt(document.getElementById('numPeople').value);
-            const mode = document.getElementById('mode').value;
-            const sets = parseInt(document.getElementById('totalSets').value);
-
+            const totalSets = parseInt(document.getElementById('totalSets').value);
+            let members = [];
             for(let i=1; i<=num; i++) {
-                members.push({
-                    name: document.getElementById(`name${i}`).value || `선수${i}`,
-                    sex: document.getElementById(`sex${i}`).value,
-                    val: parseInt(document.getElementById(`val${i}`).value) || 1,
-                    playCount: 0 
+                members.push({ 
+                    name: document.getElementById(`n${i}`).value || `선수${i}`, 
+                    sex: document.getElementById(`s${i}`).value, 
+                    level: parseInt(document.getElementById(`v${i}`).value), 
+                    count: 0 
                 });
             }
 
-            // [알고리즘] 초기 정렬
-            if(mode === 'level') {
-                members.forEach(m => { if(m.sex === 'F' && m.val >= 6) m.val += 2; });
-                members.sort((a,b) => b.val - a.val);
-            }
+            let schedule = [];
 
-            let result = `--- 최종 대진표 (${mode === 'level' ? '레벨' : '순위'} 모드) ---\n\n`;
-            
-            for(let i = 1; i <= sets; i++) {
-                // 1. 경기 적게 뛴 사람 우선 + 같은 횟수면 랜덤 정렬
-                members.sort((a, b) => a.playCount - b.playCount || Math.random() - 0.5);
+            for (let i = 0; i < totalSets; i++) {
+                members.sort((a, b) => a.count - b.count || b.level - a.level);
+                let pool = members.slice(0, 8).sort((a, b) => b.level - a.level);
                 
-                // 2. 상위 8명 추출 (코트 2개분)
-                let courtGroup = members.slice(0, 8);
-                courtGroup.forEach(m => m.playCount++); 
-
-                // 3. 20% 확률로 밸런스 파괴 (랜덤 섞기)
-                if(Math.random() > 0.8) courtGroup.sort(() => Math.random() - 0.5);
-
-                result += `[${i}세트]\n`;
-                result += `A코트: [${courtGroup[0].name}, ${courtGroup[7].name}] vs [${courtGroup[1].name}, ${courtGroup[6].name}]\n`;
-                result += `B코트: [${courtGroup[2].name}, ${courtGroup[5].name}] vs [${courtGroup[3].name}, ${courtGroup[4].name}]\n\n`;
+                let pairs = [[pool[0], pool[7]], [pool[1], pool[6]], [pool[2], pool[5]], [pool[3], pool[4]]];
+                let match = getBestMatch(pairs);
+                
+                pool.forEach(m => m.count++);
+                schedule.push({ match });
             }
-            
-            result += `----------------------------\n`;
-            result += `[개인별 총 출전 횟수 요약]\n`;
-            members.forEach(m => {
-                result += `- ${m.name}: ${m.playCount}회\n`;
-            });
 
+            renderUI(schedule, members);
+        }
+
+        function getBestMatch(pairs) {
+            let possible = [[[pairs[0], pairs[1]], [pairs[2], pairs[3]]], [[pairs[0], pairs[2]], [pairs[1], pairs[3]]], [[pairs[0], pairs[3]], [pairs[1], pairs[2]]]];
+            possible.sort((a, b) => getScore(b) - getScore(a));
+            return possible[0];
+        }
+
+        function getScore(match) {
+            let s = 0;
+            match.forEach(c => {
+                let m = c[0].filter(p => p.sex === 'M').length + c[1].filter(p => p.sex === 'M').length;
+                if (m > 0 && m < 4) s += 3; else if (m === 4 || m === 0) s += 2; else s += 1;
+            });
+            return s;
+        }
+
+        function renderUI(schedule, members) {
+            let log = "";
+            schedule.forEach((s, i) => {
+                log += `[${i+1}세트]\n`;
+                log += `코트1: ${format(s.match[0][0][0])}/${format(s.match[0][0][1])} vs ${format(s.match[0][1][0])}/${format(s.match[0][1][1])}\n`;
+                log += `코트2: ${format(s.match[1][0][0])}/${format(s.match[1][0][1])} vs ${format(s.match[1][1][0])}/${format(s.match[1][1][1])}\n\n`;
+            });
+            members.sort((a,b) => b.count - a.count);
+            log += "--- 출전 횟수 ---\n";
+            members.forEach(m => log += `${m.name}(${m.count}회) `);
             document.getElementById('step2').style.display = 'none';
             document.getElementById('resultCard').style.display = 'block';
-            document.getElementById('resultArea').innerText = result;
+            document.getElementById('resultArea').innerText = log;
         }
+
+        function format(p) { return `${p.name}(${p.sex=='M'?'남':'여'})`; }
     </script>
 </body>
 </html>
