@@ -251,7 +251,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
        버전 배지: 이 텍스트만 수정
        규칙: 짜잘한수정→x.x.X / 기능추가·디자인→x.X.0 / 대규모공사→X.0.0
        ============================================ -->
-  <div class="version-badge">v2.1.0</div>
+  <div class="version-badge">v2.1.1</div>
 </div>
 
 <div class="container">
@@ -455,40 +455,44 @@ function computePlan(males, females, T) {
 }
 
 // ── STEP 2: 슬롯 유형 배열 생성 ──
+// ★ 완전 랜덤화: 매 호출마다 다른 슬롯 위치 배정
 function makeSlotTypes(plan, T) {
-  const types=Array(T).fill('mixed');
-  for (let i=0; i<plan.men; i++) {
-    let pos=Math.floor(T*0.6*(i+1)/(plan.men+1));
-    while(pos<T&&types[pos]!=='mixed') pos++;
-    if(pos<T) types[pos]='men';
-  }
-  for (let i=0; i<plan.women; i++) {
-    let pos=Math.floor(T*(0.4+0.6*(i+1)/(plan.women+1)));
-    while(pos<T&&types[pos]!=='mixed') pos++;
-    if(pos<T) types[pos]='women';
-  }
+  const types = Array(T).fill('mixed');
+  // 모든 슬롯 인덱스를 셔플해서 랜덤 위치 확보
+  const shuffled = Array.from({length:T},(_,i)=>i).sort(()=>Math.random()-0.5);
+  // 남복: 전반~중반 슬롯 중 랜덤 선택
+  const menPool = shuffled.filter(p=>p<Math.ceil(T*0.72));
+  for(let i=0;i<plan.men&&i<menPool.length;i++) types[menPool[i]]='men';
+  // 여복: 중반~후반 슬롯 중 랜덤 선택 (이미 남복으로 배정된 슬롯 제외)
+  const wPool = shuffled.filter(p=>p>=Math.floor(T*0.28)&&types[p]==='mixed');
+  for(let i=0;i<plan.women&&i<wPool.length;i++) types[wPool[i]]='women';
   return types;
 }
 
 // ── STEP 3: 핵심 그리디 배치 ──
-// ★ 중복 매치 추적(usedMatchKeys) + 같은 팀 추적(partnerMap)
-// ★ 슬롯마다 완전 탐색으로 최적 배치
+// ★ 완전 랜덤 타이브레이커: 경기 수 동일할 때 무작위 선택 (결정론적 패턴 제거)
+// ★ 유형별 경기수 추적(mdCount): 남복/여복 참여 균등 분배
+// ★ 중복 매치(usedMatchKeys) + 같은 팀(partnerMap) 방지
+// ★ 혼복 슬롯에서 남복으로 이탈 방지
 function greedyFill(valid, slotTypes, totalSlots, courtCount, capMap) {
   const pCount={};
-  valid.forEach(p=>pCount[p.id]=0);
+  const mdCount={}; // 남복 참여 횟수 — 남복 균등 분배 핵심
+  const fdCount={}; // 여복 참여 횟수
+  // ★ 같은 경기수일 때 무작위 선택을 위한 타이브레이커 (이 실행 내에서만 고정)
+  const randTB={};
+  valid.forEach(p=>{
+    pCount[p.id]=0; mdCount[p.id]=0; fdCount[p.id]=0;
+    randTB[p.id]=Math.random(); // 매 greedyFill 호출마다 새 랜덤값
+  });
+
   const busy  = Array.from({length:totalSlots},()=>new Set());
   const grid  = Array.from({length:totalSlots},()=>Array(courtCount).fill(null));
-
-  // ★ 중복 매치 방지: 이미 한 A팀 vs B팀 조합은 다시 쓰지 않음
   const usedMatchKeys = new Set();
-
-  // ★ 같은 팀 방지: 이미 팀메이트였던 사람은 다시 같은 팀이 되지 않도록 (소프트 제약)
   const partnerMap={};
   valid.forEach(p=>partnerMap[p.id]=new Set());
-
   let junkCount=0;
 
-  const canPlay = p => !capMap[p.id]||pCount[p.id]<capMap[p.id];
+  const canPlay = p=>!capMap[p.id]||pCount[p.id]<capMap[p.id];
 
   function mkKey(t1,t2) {
     const k1=[...t1].map(p=>p.id).sort().join('-');
@@ -496,63 +500,79 @@ function greedyFill(valid, slotTypes, totalSlots, courtCount, capMap) {
     return [k1,k2].sort().join('|');
   }
 
-  // 배치 점수: 낮을수록 좋음
-  // - 균등 배분: 경기 수 적은 선수 우선 (가중치 최대)
-  // - 레벨 밸런스
-  // - 같은 팀 재편성 페널티 (소프트 제약)
-  // - 중복 매치: Infinity (하드 제약, allowRepeat=true 시 해제)
-  function arrScore(t1, t2, allowRepeat) {
-    if (!allowRepeat && usedMatchKeys.has(mkKey(t1,t2))) return Infinity;
+  // 혼복 점수: 균등배분 + 레벨밸런스 + 팀 재편성 페널티
+  function mixScore(t1,t2,allowRepeat) {
+    if(!allowRepeat&&usedMatchKeys.has(mkKey(t1,t2))) return Infinity;
     const all=[...t1,...t2];
     const gMin=Math.min(...valid.map(p=>pCount[p.id]));
-    const fairness=all.reduce((s,p)=>s+(pCount[p.id]-gMin)*4,0);
+    const fair=all.reduce((s,p)=>s+(pCount[p.id]-gMin)*4,0);
     const lvBal=Math.abs(t1.reduce((s,p)=>s+p.level,0)-t2.reduce((s,p)=>s+p.level,0))*0.7;
     const repPen=(partnerMap[t1[0].id].has(t1[1].id)?4:0)+(partnerMap[t2[0].id].has(t2[1].id)?4:0);
-    return fairness+lvBal+repPen;
+    return fair+lvBal+repPen;
   }
 
-  // 혼복 최적 배치 탐색 (2M + 2F)
-  function findMixed(t, allowRepeat) {
-    const ms=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)&&p.gender==='M').sort((a,b)=>pCount[a.id]-pCount[b.id]);
-    const fs=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)&&p.gender==='F').sort((a,b)=>pCount[a.id]-pCount[b.id]);
+  // ★ 동성 점수: 유형별 경기수(mdCount/fdCount) 최우선 → 남복/여복 균등 분배
+  function sgScore(t1,t2,gender,allowRepeat) {
+    if(!allowRepeat&&usedMatchKeys.has(mkKey(t1,t2))) return Infinity;
+    const typeRef=gender==='M'?mdCount:fdCount;
+    const all=[...t1,...t2];
+    const typeMin=Math.min(...valid.filter(p=>p.gender===gender).map(p=>typeRef[p.id]));
+    const typeFair=all.reduce((s,p)=>s+(typeRef[p.id]-typeMin)*8,0); // 가중치 최대
+    const gMin=Math.min(...valid.map(p=>pCount[p.id]));
+    const fair=all.reduce((s,p)=>s+(pCount[p.id]-gMin)*3,0);
+    const lvBal=Math.abs(t1.reduce((s,p)=>s+p.level,0)-t2.reduce((s,p)=>s+p.level,0))*0.7;
+    const repPen=(partnerMap[t1[0].id].has(t1[1].id)?4:0)+(partnerMap[t2[0].id].has(t2[1].id)?4:0);
+    return typeFair+fair+lvBal+repPen;
+  }
+
+  // 혼복 탐색: ★ randTB로 동점 시 무작위 선택
+  function findMixed(t,allowRepeat) {
+    const ms=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)&&p.gender==='M')
+      .sort((a,b)=>pCount[a.id]-pCount[b.id]||randTB[a.id]-randTB[b.id]);
+    const fs=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)&&p.gender==='F')
+      .sort((a,b)=>pCount[a.id]-pCount[b.id]||randTB[a.id]-randTB[b.id]);
     if(ms.length<2||fs.length<2) return null;
-    let best=null, bestSc=Infinity;
-    // 후보 제한 (성능): 상위 6명씩
+    let best=null,bestSc=Infinity;
     const mc=ms.slice(0,Math.min(ms.length,6));
     const fc=fs.slice(0,Math.min(fs.length,6));
     for(let i=0;i<mc.length;i++) for(let j=i+1;j<mc.length;j++)
     for(let k=0;k<fc.length;k++) for(let l=k+1;l<fc.length;l++) {
       for(const [t1,t2] of [[[mc[i],fc[k]],[mc[j],fc[l]]],[[mc[i],fc[l]],[mc[j],fc[k]]]]) {
-        const sc=arrScore(t1,t2,allowRepeat);
+        const sc=mixScore(t1,t2,allowRepeat);
         if(sc<bestSc){bestSc=sc;best={team1:t1,team2:t2,type:'mixed'};}
       }
     }
     return best;
   }
 
-  // 동성 최적 배치 탐색
-  function findSameGender(t, gender, allowRepeat) {
-    const pl=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)&&p.gender===gender).sort((a,b)=>pCount[a.id]-pCount[b.id]);
+  // ★ 동성 탐색: mdCount/fdCount 적은 선수 우선 + randTB 동점 처리
+  function findSG(t,gender,allowRepeat) {
+    const typeRef=gender==='M'?mdCount:fdCount;
+    const pl=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)&&p.gender===gender)
+      .sort((a,b)=>typeRef[a.id]-typeRef[b.id]||pCount[a.id]-pCount[b.id]||randTB[a.id]-randTB[b.id]);
     if(pl.length<4) return null;
     const type=gender==='M'?'men':'women';
-    let best=null, bestSc=Infinity;
+    let best=null,bestSc=Infinity;
     const pc=pl.slice(0,Math.min(pl.length,8));
     for(let i=0;i<pc.length;i++) for(let j=i+1;j<pc.length;j++)
     for(let k=j+1;k<pc.length;k++) for(let l=k+1;l<pc.length;l++) {
       const four=[pc[i],pc[j],pc[k],pc[l]];
       for(const [t1,t2] of [[[four[0],four[1]],[four[2],four[3]]],[[four[0],four[2]],[four[1],four[3]]],[[four[0],four[3]],[four[1],four[2]]]]) {
-        const sc=arrScore(t1,t2,allowRepeat);
+        const sc=sgScore(t1,t2,gender,allowRepeat);
         if(sc<bestSc){bestSc=sc;best={team1:t1,team2:t2,type};}
       }
     }
     return best;
   }
 
-  function commit(match, t, c) {
+  function commit(match,t,c) {
     grid[t][c]=match;
     usedMatchKeys.add(mkKey(match.team1,match.team2));
-    [...match.team1,...match.team2].forEach(p=>{pCount[p.id]++;busy[t].add(p.id);});
-    // 팀메이트 기록
+    [...match.team1,...match.team2].forEach(p=>{
+      pCount[p.id]++;busy[t].add(p.id);
+      if(match.type==='men')   mdCount[p.id]++; // 남복 횟수 기록
+      if(match.type==='women') fdCount[p.id]++; // 여복 횟수 기록
+    });
     for(const team of [match.team1,match.team2]) {
       partnerMap[team[0].id].add(team[1].id);
       partnerMap[team[1].id].add(team[0].id);
@@ -560,26 +580,28 @@ function greedyFill(valid, slotTypes, totalSlots, courtCount, capMap) {
     if(match.type==='junk') junkCount++;
   }
 
-  for(let t=0; t<totalSlots; t++) {
-    for(let c=0; c<courtCount; c++) {
+  for(let t=0;t<totalSlots;t++) {
+    for(let c=0;c<courtCount;c++) {
       const type=slotTypes[t*courtCount+c];
       let match=null;
 
-      // 1순위: 지정 유형, 중복 매치 없음
-      if(type==='men')   match=findSameGender(t,'M',false);
-      if(type==='women') match=findSameGender(t,'F',false);
-      // 2순위: 혼복, 중복 매치 없음
-      if(!match) match=findMixed(t,false);
-      // 3순위: 지정 유형, 중복 매치 허용
-      if(!match&&type==='men')   match=findSameGender(t,'M',true);
-      if(!match&&type==='women') match=findSameGender(t,'F',true);
-      // 4순위: 혼복, 중복 매치 허용
-      if(!match) match=findMixed(t,true);
-      // 5순위: 반대 동성, 중복 허용
-      if(!match) match=findSameGender(t,'M',true)??findSameGender(t,'F',true);
-      // 6순위: 잡복 (부득이)
+      if(type==='men') {
+        // 남복 슬롯: 남복 → 혼복 순 시도
+        match = findSG(t,'M',false) ?? findMixed(t,false) ?? findSG(t,'M',true) ?? findMixed(t,true);
+      } else if(type==='women') {
+        // 여복 슬롯: 여복 → 혼복 순 시도
+        match = findSG(t,'F',false) ?? findMixed(t,false) ?? findSG(t,'F',true) ?? findMixed(t,true);
+      } else {
+        // ★ 혼복 슬롯: 반드시 혼복 유지, 동성으로 이탈 방지
+        match = findMixed(t,false) ?? findMixed(t,true);
+        // 혼복이 완전히 불가능한 극단적 상황에서만 동성 허용
+        if(!match) match=findSG(t,'M',true)??findSG(t,'F',true);
+      }
+
+      // 최후 수단: 잡복
       if(!match) {
-        const all=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p)).sort((a,b)=>pCount[a.id]-pCount[b.id]);
+        const all=valid.filter(p=>!busy[t].has(p.id)&&canPlay(p))
+          .sort((a,b)=>pCount[a.id]-pCount[b.id]||randTB[a.id]-randTB[b.id]);
         if(all.length>=4) {
           const s=[...all].sort((a,b)=>b.level-a.level);
           match={team1:[s[0],s[3]],team2:[s[1],s[2]],type:'junk'};
@@ -592,44 +614,68 @@ function greedyFill(valid, slotTypes, totalSlots, courtCount, capMap) {
   return {grid,pCount,junkCount};
 }
 
-// ── STEP 4: 검증 (★ 필수 조건: 최대-최소 편차 ≤ 1) ──
-function verify(valid, pCount) {
+// ── STEP 4: 검증 ──
+function verify(valid,pCount) {
   const counts=valid.map(p=>pCount[p.id]||0);
-  const mx=Math.max(...counts), mn=Math.min(...counts);
+  const mx=Math.max(...counts),mn=Math.min(...counts);
   return {max:mx,min:mn,spread:mx-mn,ok:mx-mn<=1};
 }
 
-// ── STEP 5: 메인 스케줄러 (최대 30회 재시도, 최선 결과 채택) ──
-function buildSchedule(valid, males, females, startMin, duration, totalSlots, courtCount) {
+// ── 대진표 지문 생성 (이전 결과와 비교용) ──
+function getFingerprint(grid) {
+  return grid.flat().filter(Boolean).map(m=>{
+    const k1=[...m.team1].map(p=>p.id).sort().join('-');
+    const k2=[...m.team2].map(p=>p.id).sort().join('-');
+    return [k1,k2].sort().join('|');
+  }).sort().join(';;');
+}
+
+// ── STEP 5: 메인 스케줄러 ──
+// ★ 항상 완전 셔플 + 슬롯 랜덤화
+// ★ 이전 결과 기억 → 다시 돌리면 반드시 다른 결과 생성
+function buildSchedule(valid,males,females,startMin,duration,totalSlots,courtCount) {
   const T=totalSlots*courtCount;
   const plan=computePlan(males,females,T);
   const capMap={};
   valid.forEach(p=>{if(p.maxGames) capMap[p.id]=p.maxGames;});
 
-  let best=null, bestSpread=Infinity, bestJunk=Infinity;
+  let best=null,bestSpread=Infinity,bestJunk=Infinity,bestIsDiff=false;
 
   // ============================================
-  // 최대 재시도 횟수: 30회
-  // 검증 실패 시 셔플 후 재시도, 최선 결과 채택
+  // 최대 재시도 횟수: 40회
+  // 매 시도: 선수 셔플 + 슬롯 랜덤화 → 항상 다른 경우의 수 탐색
+  // 이전 결과와 다른 대진표를 우선 채택
   // ============================================
-  for(let attempt=0; attempt<30; attempt++) {
-    const v=attempt===0?[...valid]:[...valid].sort(()=>Math.random()-0.5);
+  for(let attempt=0;attempt<40;attempt++) {
+    // ★ 매 시도마다 선수 순서 완전 셔플 (1회차도 포함)
+    const v=[...valid].sort(()=>Math.random()-0.5);
+    // ★ 슬롯 위치도 매번 랜덤 (makeSlotTypes 내부에서 셔플)
     const slotTypes=makeSlotTypes(plan,T);
     const res=greedyFill(v,slotTypes,totalSlots,courtCount,capMap);
     const vr=verify(v,res.pCount);
+    const fp=getFingerprint(res.grid);
+    // ★ 이전 생성 결과와 다른지 확인
+    const isDiff=fp!==buildSchedule._lastFP;
 
-    // 1순위: spread 최소, 2순위: junk 최소
-    const better = vr.spread<bestSpread ||(vr.spread===bestSpread&&res.junkCount<bestJunk);
-    if(better) {
-      bestSpread=vr.spread; bestJunk=res.junkCount;
+    // 채택 기준: spread 최소 → junk 최소 → 이전과 다른 결과 선호
+    const better = best===null ||
+      vr.spread<bestSpread ||
+      (vr.spread===bestSpread&&res.junkCount<bestJunk) ||
+      (vr.spread===bestSpread&&res.junkCount===bestJunk&&isDiff&&!bestIsDiff);
+
+    if(better){
+      bestSpread=vr.spread; bestJunk=res.junkCount; bestIsDiff=isDiff;
       const pCount={};
       valid.forEach(p=>pCount[p.id]=res.pCount[p.id]||0);
-      best={grid:res.grid,pCount,junkCount:res.junkCount,verification:vr};
+      best={grid:res.grid,pCount,junkCount:res.junkCount,verification:vr,fp};
     }
-    if(vr.ok&&res.junkCount===0) break; // 완벽한 결과면 조기 종료
+    // 완벽한 결과(균등+잡복없음+이전과다름)면 조기 종료
+    if(vr.ok&&res.junkCount===0&&isDiff) break;
   }
 
   if(!best) return null;
+  // ★ 이번 결과 기억 (다음 생성 시 비교용)
+  buildSchedule._lastFP=best.fp;
 
   // ============================================
   // 코트 라벨 — 추가 시 배열에 이어 붙이기
