@@ -102,41 +102,287 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .si input:focus{border-color:var(--accent);}
 
 /* ─ PLAYER CARDS ─ */
-.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-bottom:13px;}
-.pr{display:grid;grid-template-rows:auto auto;background:var(--bg);border:1px solid var(--bg3);border-radius:10px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;}
-.pr:hover{border-color:rgba(120,216,78,0.4);box-shadow:0 0 0 1px rgba(120,216,78,0.08);}
-.pt{display:grid;grid-template-columns:28px 0.6fr 44px 28px;height:36px;border-bottom:1px solid var(--bg3);}
-.pn{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--accent);text-align:center;padding:0 4px 0 9px;line-height:36px;}
-.ni{background:transparent;border:none;outline:none;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.88rem;padding:0 5px;min-width:0;height:36px;}
-.ni::placeholder{color:var(--text-dim);}
-.mi{background:rgba(252,211,77,0.05);border:none;border-left:1px solid var(--bg3);outline:none;color:var(--yellow);font-family:'Bebas Neue',sans-serif;font-size:0.9rem;text-align:center;padding:0;height:36px;width:100%;}
-.mi::placeholder{color:rgba(252,211,77,0.35);font-size:0.6rem;font-family:'Noto Sans KR',sans-serif;}
-.mi::-webkit-inner-spin-button,.mi::-webkit-outer-spin-button{-webkit-appearance:none;}
-.rb{background:none;border:none;border-left:1px solid var(--bg3);color:rgba(100,130,100,0.4);cursor:pointer;font-size:0.74rem;width:100%;height:36px;display:flex;align-items:center;justify-content:center;transition:background 0.15s,color 0.15s;}
-.rb:hover{background:rgba(239,68,68,0.1);color:var(--red);}
-.pb{display:grid;grid-template-columns:0.6fr 38px 52px;height:30px;align-items:stretch;}
-.gb{display:flex;}
-.gb button{flex:1;height:30px;border:none;border-right:1px solid var(--bg3);cursor:pointer;font-size:0.75rem;font-weight:700;transition:all 0.15s;background:transparent;}
-.gb .bm{color:rgba(96,165,250,0.4);}
-.gb .bf{color:rgba(244,114,182,0.4);border-right:none;}
-.gb .bm.active{background:rgba(96,165,250,0.16);color:#93c5fd;}
-.gb .bf.active{background:rgba(244,114,182,0.14);color:#f9a8d4;}
-.ls{background:transparent;border:none;border-left:1px solid var(--bg3);color:var(--yellow);padding:0 6px;font-size:0.75rem;font-family:'Noto Sans KR',sans-serif;font-weight:700;cursor:pointer;outline:none;height:30px;width:52px;flex-shrink:0;}
-.ls option{background:var(--bg2);color:var(--text);}
-/* 시작 경기 입력 필드 */
-.sf{background:rgba(96,165,250,0.05);border:none;border-left:1px solid var(--bg3);outline:none;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:0.9rem;text-align:center;padding:0;height:30px;width:100%;}
-.sf::placeholder{color:rgba(96,165,250,0.3);font-size:0.6rem;font-family:'Noto Sans KR',sans-serif;}
-.sf::-webkit-inner-spin-button,.sf::-webkit-outer-spin-button{-webkit-appearance:none;}
+/* ─ PLAYER CARDS ─ */
+.player-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:8px;
+  margin-bottom:13px;
+}
 
-.max-hint{font-size:0.71rem;color:var(--text-dim);margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.mhb{display:inline-flex;align-items:center;justify-content:center;width:20px;height:15px;border:1px solid var(--bg3);border-radius:3px;background:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:0.76rem;}
+.pr{
+  display:grid;
+  grid-template-rows:36px 30px;
+  background:var(--bg);
+  border:1px solid var(--bg3);
+  border-radius:10px;
+  overflow:hidden;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
 
-.add-btn{background:transparent;border:1.5px dashed rgba(120,216,78,0.26);color:rgba(120,216,78,0.5);border-radius:10px;padding:9px 16px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:0.82rem;transition:all 0.2s;width:100%;margin-top:9px;}
-.add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(120,216,78,0.04);}
+.pr:hover{
+  border-color:rgba(120,216,78,0.4);
+  box-shadow:0 0 0 1px rgba(120,216,78,0.08);
+}
 
-.gen-btn{background:linear-gradient(135deg,#1e5c14,#2d8c1e);border:none;color:white;border-radius:10px;padding:13px 40px;font-family:'Bebas Neue',sans-serif;font-size:1.28rem;letter-spacing:3px;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(30,92,20,0.45);display:block;width:100%;}
-.gen-btn:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(30,92,20,0.6);}
-.gen-btn:active{transform:translateY(0);}
+/* ── 위쪽: 번호 / 이름 / 레벨 / 최대경기 / 삭제 ── */
+.pt{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) 52px 52px 28px;
+  height:36px;
+  border-bottom:1px solid var(--bg3);
+}
+
+.pn{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1rem;
+  color:var(--accent);
+  text-align:center;
+  padding:0 4px 0 9px;
+  line-height:36px;
+}
+
+.ni{
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:0.88rem;
+  padding:0 7px;
+  min-width:0;
+  width:100%;
+  height:36px;
+}
+
+.ni::placeholder{
+  color:var(--text-dim);
+}
+
+/* ── 레벨 ── */
+.ls{
+  background:rgba(252,211,77,0.05);
+  border:none;
+  border-left:1px solid var(--bg3);
+  color:var(--yellow);
+  padding:0 3px;
+  font-size:0.72rem;
+  font-family:'Noto Sans KR',sans-serif;
+  font-weight:700;
+  cursor:pointer;
+  outline:none;
+  height:36px;
+  width:100%;
+  min-width:0;
+  text-align:center;
+}
+
+.ls option{
+  background:var(--bg2);
+  color:var(--text);
+}
+
+/* ── 최대 경기 수 ── */
+.mi{
+  background:rgba(252,211,77,0.05);
+  border:none;
+  border-left:1px solid var(--bg3);
+  outline:none;
+  color:var(--yellow);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.9rem;
+  text-align:center;
+  padding:0;
+  height:36px;
+  width:100%;
+}
+
+.mi::placeholder{
+  color:rgba(252,211,77,0.35);
+  font-size:0.6rem;
+  font-family:'Noto Sans KR',sans-serif;
+}
+
+.mi::-webkit-inner-spin-button,
+.mi::-webkit-outer-spin-button{
+  -webkit-appearance:none;
+}
+
+/* ── 삭제 ── */
+.rb{
+  background:none;
+  border:none;
+  border-left:1px solid var(--bg3);
+  color:rgba(100,130,100,0.4);
+  cursor:pointer;
+  font-size:0.74rem;
+  width:100%;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background 0.15s,color 0.15s;
+}
+
+.rb:hover{
+  background:rgba(239,68,68,0.1);
+  color:var(--red);
+}
+
+/* ── 아래쪽: 빈칸 / 성별 / 시작 경기 / 빈칸 / 빈칸 ── */
+.pb{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) 52px 52px 28px;
+  height:30px;
+  align-items:stretch;
+}
+
+/* 번호 아래 빈 공간 */
+.pb::before{
+  content:'';
+  display:block;
+  grid-column:1;
+}
+
+/* ── 성별 ── */
+.gb{
+  display:flex;
+  grid-column:2;
+}
+
+.gb button{
+  flex:1;
+  height:30px;
+  border:none;
+  border-right:1px solid var(--bg3);
+  cursor:pointer;
+  font-size:0.75rem;
+  font-weight:700;
+  transition:all 0.15s;
+  background:transparent;
+}
+
+.gb .bm{
+  color:rgba(96,165,250,0.4);
+}
+
+.gb .bf{
+  color:rgba(244,114,182,0.4);
+  border-right:none;
+}
+
+.gb .bm.active{
+  background:rgba(96,165,250,0.16);
+  color:#93c5fd;
+}
+
+.gb .bf.active{
+  background:rgba(244,114,182,0.14);
+  color:#f9a8d4;
+}
+
+/* ── 시작 경기 ── */
+.sf{
+  grid-column:3;
+  background:rgba(96,165,250,0.05);
+  border:none;
+  border-left:1px solid var(--bg3);
+  outline:none;
+  color:var(--blue);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.9rem;
+  text-align:center;
+  padding:0;
+  height:30px;
+  width:100%;
+}
+
+.sf::placeholder{
+  color:rgba(96,165,250,0.3);
+  font-size:0.6rem;
+  font-family:'Noto Sans KR',sans-serif;
+}
+
+.sf::-webkit-inner-spin-button,
+.sf::-webkit-outer-spin-button{
+  -webkit-appearance:none;
+}
+
+/* ── 아래쪽 오른쪽 빈 영역 ── */
+.pb::after{
+  content:'';
+  grid-column:4 / 6;
+  display:block;
+}
+
+/* ── 안내 ── */
+.max-hint{
+  font-size:0.71rem;
+  color:var(--text-dim);
+  margin-top:5px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.mhb{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:15px;
+  border:1px solid var(--bg3);
+  border-radius:3px;
+  background:var(--bg);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.76rem;
+}
+
+.add-btn{
+  background:transparent;
+  border:1.5px dashed rgba(120,216,78,0.26);
+  color:rgba(120,216,78,0.5);
+  border-radius:10px;
+  padding:9px 16px;
+  cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:0.82rem;
+  transition:all 0.2s;
+  width:100%;
+  margin-top:9px;
+}
+
+.add-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:rgba(120,216,78,0.04);
+}
+
+.gen-btn{
+  background:linear-gradient(135deg,#1e5c14,#2d8c1e);
+  border:none;
+  color:white;
+  border-radius:10px;
+  padding:13px 40px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.28rem;
+  letter-spacing:3px;
+  cursor:pointer;
+  transition:all 0.3s;
+  box-shadow:0 4px 20px rgba(30,92,20,0.45);
+  display:block;
+  width:100%;
+}
+
+.gen-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 30px rgba(30,92,20,0.6);
+}
+
+.gen-btn:active{
+  transform:translateY(0);
+}
 
 /* ═══ RESULT ═══ */
 .result-area{display:none;}
@@ -408,29 +654,90 @@ function renderGrid() {
   const grid = document.getElementById('playerGrid');
   grid.innerHTML = '';
   document.getElementById('pcBadge').textContent = players.length;
+
   players.forEach((p,idx) => {
     const d = document.createElement('div');
     d.className = 'pr';
+
     const sfVal = p.startFrom && p.startFrom > 1 ? p.startFrom : '';
+
     d.innerHTML = `
       <div class="pt">
+
+        <!-- 번호 -->
         <span class="pn">${idx+1}</span>
-        <input class="ni" type="text" placeholder="이름 입력" value="${p.name}" oninput="upd(${p.id},'name',this.value)">
-        <input class="mi" type="number" min="1" max="20" placeholder="최대" value="${p.maxGames!==null?p.maxGames:''}" oninput="upd(${p.id},'maxGames',this.value===''?null:+this.value)" title="최대 경기 수">
-        <button class="rb" onclick="removePlayer(${p.id})">✕</button>
-      </div>
-      <div class="pb">
-        <div class="gb">
-          <button class="bm ${p.gender==='M'?'active':''}" onclick="setGender(${p.id},'M')">남</button>
-          <button class="bf ${p.gender==='F'?'active':''}" onclick="setGender(${p.id},'F')">여</button>
-        </div>
-        <input class="sf" type="number" min="1" max="12" placeholder="시작" value="${sfVal}"
-          oninput="upd(${p.id},'startFrom',this.value===''?1:+this.value)"
-          title="몇 번째 경기부터 참여 가능한지 (기본값: 1경기부터)">
-        <select class="ls" onchange="upd(${p.id},'level',+this.value)">
-          ${[1,2,3,4].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}레벨</option>`).join('')}
+
+        <!-- 이름 -->
+        <input
+          class="ni"
+          type="text"
+          placeholder="이름 입력"
+          value="${p.name}"
+          oninput="upd(${p.id},'name',this.value)"
+        >
+
+        <!-- 등급 -->
+        <select
+          class="ls"
+          onchange="upd(${p.id},'level',+this.value)"
+          title="선수 등급"
+        >
+          ${[1,2,3,4].map(l =>
+            `<option value="${l}" ${p.level===l?'selected':''}>${l}레벨</option>`
+          ).join('')}
         </select>
-      </div>`;
+
+        <!-- 최대 경기 수 -->
+        <input
+          class="mi"
+          type="number"
+          min="1"
+          max="20"
+          placeholder="최대"
+          value="${p.maxGames!==null?p.maxGames:''}"
+          oninput="upd(${p.id},'maxGames',this.value===''?null:+this.value)"
+          title="최대 경기 수"
+        >
+
+        <!-- 삭제 -->
+        <button
+          class="rb"
+          onclick="removePlayer(${p.id})"
+          title="선수 삭제"
+        >✕</button>
+
+      </div>
+
+      <div class="pb">
+
+        <!-- 성별 -->
+        <div class="gb">
+          <button
+            class="bm ${p.gender==='M'?'active':''}"
+            onclick="setGender(${p.id},'M')"
+          >남</button>
+
+          <button
+            class="bf ${p.gender==='F'?'active':''}"
+            onclick="setGender(${p.id},'F')"
+          >여</button>
+        </div>
+
+        <!-- 시작 경기 -->
+        <input
+          class="sf"
+          type="number"
+          min="1"
+          max="12"
+          placeholder="시작"
+          value="${sfVal}"
+          oninput="upd(${p.id},'startFrom',this.value===''?1:+this.value)"
+          title="몇 번째 경기부터 참여 가능한지 (기본값: 1경기부터)"
+        >
+
+      </div>
+    `;
+
     grid.appendChild(d);
   });
 }
