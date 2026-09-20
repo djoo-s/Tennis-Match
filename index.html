@@ -121,11 +121,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .gb .bf{color:rgba(244,114,182,0.4);border-right:none;}
 .gb .bm.active{background:rgba(96,165,250,0.16);color:#93c5fd;}
 .gb .bf.active{background:rgba(244,114,182,0.14);color:#f9a8d4;}
-.ls{background:transparent;border:none;border-left:1px solid var(--bg3);color:var(--yellow);padding:0 7px;font-size:0.75rem;font-family:'Noto Sans KR',sans-serif;font-weight:700;cursor:pointer;outline:none;height:30px;width:90px;flex-shrink:0;}
+.ls{background:transparent;border:none;border-left:1px solid var(--bg3);color:var(--yellow);padding:0 6px;font-size:0.75rem;font-family:'Noto Sans KR',sans-serif;font-weight:700;cursor:pointer;outline:none;height:30px;width:52px;flex-shrink:0;}
 .ls option{background:var(--bg2);color:var(--text);}
+/* 시작 경기 입력 필드 */
+.sf{width:38px;background:transparent;border:none;border-left:1px solid var(--bg3);outline:none;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:0.9rem;text-align:center;padding:0;height:30px;flex-shrink:0;}
+.sf::placeholder{color:rgba(96,165,250,0.2);font-size:0.62rem;font-family:'Noto Sans KR',sans-serif;}
+.sf::-webkit-inner-spin-button,.sf::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-.max-hint{font-size:0.71rem;color:var(--text-dim);margin-top:5px;display:flex;align-items:center;gap:5px;}
-.mhb{display:inline-flex;align-items:center;justify-content:center;width:20px;height:15px;border:1px solid var(--bg3);border-radius:3px;background:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:0.76rem;color:var(--yellow);}
+.max-hint{font-size:0.71rem;color:var(--text-dim);margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mhb{display:inline-flex;align-items:center;justify-content:center;width:20px;height:15px;border:1px solid var(--bg3);border-radius:3px;background:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:0.76rem;}
 
 .add-btn{background:transparent;border:1.5px dashed rgba(120,216,78,0.26);color:rgba(120,216,78,0.5);border-radius:10px;padding:9px 16px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:0.82rem;transition:all 0.2s;width:100%;margin-top:9px;}
 .add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(120,216,78,0.04);}
@@ -316,7 +320,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
 
     <div id="playerGrid" class="player-grid"></div>
-    <div class="max-hint"><span class="mhb">3</span> 이름 옆 숫자 = 개인 최대 경기 수 (공란이면 제한 없음)</div>
+    <div class="max-hint">
+      <span class="mhb" style="color:var(--yellow)">3</span><span>최대 경기 수</span>
+      <span style="opacity:0.3;margin:0 2px">·</span>
+      <span class="mhb" style="color:var(--blue)">2↑</span><span>시작 경기 (공란 = 1경기부터)</span>
+    </div>
     <button class="add-btn" onclick="addPlayer()">+ 선수 추가</button>
     <div style="text-align:center;margin-top:7px;font-size:0.74rem;color:var(--text-dim)">
       현재 <span id="pcBadge" style="color:var(--accent);font-weight:700">0</span>명 등록
@@ -367,21 +375,21 @@ let players = [], playerIdCounter = 0;
 // level: 1~4, maxGames: null = 제한 없음
 // ============================================
 const DEFAULT_PLAYERS = [
-  { name:'재현', gender:'M', level:3, maxGames:null },
-  { name:'시온', gender:'M', level:3, maxGames:null },
-  { name:'동주', gender:'M', level:3, maxGames:null },
-  { name:'준식', gender:'M', level:3, maxGames:null },
-  { name:'현호', gender:'M', level:3, maxGames:null },
-  { name:'허찬', gender:'M', level:3, maxGames:null },
-  { name:'상진', gender:'M', level:3, maxGames:null },
-  { name:'진혁', gender:'M', level:3, maxGames:null },
-  { name:'민기', gender:'M', level:3, maxGames:null },
-  { name:'하영', gender:'F', level:3, maxGames:null },
-  { name:'지수', gender:'F', level:2, maxGames:null },
-  { name:'장미', gender:'F', level:2, maxGames:null },
-  { name:'지인', gender:'F', level:2, maxGames:null },
-  { name:'예린', gender:'F', level:2, maxGames:null },
-  { name:'주희', gender:'F', level:2, maxGames:null },
+  { name:'재현', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'시온', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'동주', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'준식', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'현호', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'허찬', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'상진', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'진혁', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'민기', gender:'M', level:3, maxGames:null, startFrom:1 },
+  { name:'하영', gender:'F', level:3, maxGames:null, startFrom:1 },
+  { name:'지수', gender:'F', level:2, maxGames:null, startFrom:1 },
+  { name:'장미', gender:'F', level:2, maxGames:null, startFrom:1 },
+  { name:'지인', gender:'F', level:2, maxGames:null, startFrom:1 },
+  { name:'예린', gender:'F', level:2, maxGames:null, startFrom:1 },
+  { name:'주희', gender:'F', level:2, maxGames:null, startFrom:1 },
 ];
 
 window.onload = () => DEFAULT_PLAYERS.forEach(p => addPlayer(p));
